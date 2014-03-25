@@ -1,0 +1,19 @@
+#!/usr/bin/php
+<?php
+
+	if (!defined( "APP_NAME" )) {
+		define( "APP_NAME", 'spider');
+	}
+	
+	define('IS_DEBUG',1);
+
+	$winbase = dirname(__FILE__)."/../../classpath.php";
+	require_once($winbase);
+	
+	define( "ROOT_APP_PATH", ROOT_TOP_PATH. "/apps/" . APP_NAME);
+	define( "ROOT_PRO_PATH", ROOT_APP_PATH . "/");
+	define( "ROOT_BIN_PATH", ROOT_APP_PATH . "/");
+
+	$config = require(ROOT_PRO_PATH."/config/config.php");
+	
+	winBase::createConsole($config)->process();

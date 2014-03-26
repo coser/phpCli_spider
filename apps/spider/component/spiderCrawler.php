@@ -61,17 +61,21 @@ class spiderCrawler {
 				return false;
 			}
 
-			$resouceInfo = array(
-				'target' => $this->target,
-				'url' => $url,
-				'filepath' => $attachment,
-				'download' => 1,
-				'status' => 0,
-				'dateline' => time()
-			);
-			
-			$doc_id = urlResouce::model()->addResouce($resouceInfo);
-			$resouceInfo['id'] = $doc_id;
+			if(empty($resouceInfo)){
+				$resouceInfo = array(
+					'target' => $this->target,
+					'url' => $url,
+					'filepath' => $attachment,
+					'download' => 1,
+					'status' => 0,
+					'dateline' => time()
+				);
+				
+				$resouceInfo['id'] = urlResouce::model()->addResouce($resouceInfo);
+
+			}else{
+				urlResouce::model()->updateResouce(array('download'=>1),array('id' =>$resouceInfo['id'] ));
+			}
 
 		}else{
 			if(!is_file(ROOT_PRO_PATH.'runtime'.DIRECTORY_SEPARATOR."html/".$resouceInfo['filepath'])){

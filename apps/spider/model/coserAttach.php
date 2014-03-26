@@ -1,5 +1,5 @@
 <?php
-class coserArt extends BaseDb
+class coserAttach extends BaseDb
 {
 	
     public static function model($className = __CLASS__)
@@ -8,14 +8,18 @@ class coserArt extends BaseDb
     }
 	
 	function tablename(){
-		return 'coser_art';
+		return 'coser_attach';
 	}
 	
 	public function buildWhere($where = array()){
 		$whereArr = array();
-		if(isset($where['title'])){
-			$whereArr[] = " title = '".$where['title']."' ";
+		if(isset($where['aid'])){
+			$whereArr[] = " aid = '".$where['aid']."' ";
 		}
+
+		if(isset($where['attach_url'])){
+			$whereArr[] = " attach_url = '".$where['attach_url']."' ";
+		}		
 		return !empty($whereArr) ? ' WHERE '.join(' AND ',$whereArr ) : '';
 	}
 	
@@ -46,15 +50,15 @@ class coserArt extends BaseDb
 		return $this->fetch($sql);
 	}
 	
-	public function addResouce($arr){
+	public function addAttach($arr){
 		return $this->insert($this->tablename(),$arr,true);
 	}
 	
-	public function updateResouce($arr,$where){
+	public function updateAttach($arr,$where){
 		return $this->update($this->tablename(),$arr,$where);
 	}
 
-	public function deleteResouce($where){
+	public function deleteAttach($where){
 		return $this->delete($this->tablename(),$where);
 	}
 }

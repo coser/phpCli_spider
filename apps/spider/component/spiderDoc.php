@@ -28,13 +28,25 @@ class spiderDoc extends spiderCrawler{
 
 		return $items;
 	}
-	
-	function setSuccess($house_guid){
-		urlResouce::model()->updateResouce(array('status' => 1,'house_guid'=>$house_guid),array('id' => $this->resouce['id']));
-	}
-	
-	function setVoid(){
-		urlResouce::model()->updateResouce(array('status' => 2),array('id' => $this->resouce['id']));
+
+	function autoLink($relative,$referer){
+
+		$pos = strpos($relative,'#');
+		if($pos >0)
+			$relative = substr($relative,0,$pos);
+
+		if(preg_match('~^http://~i',$relative))
+			return $relative;
+
+		preg_match("~((http)://([^/]*)(.*/))([^/#]*)~i", $referer, $preg_rs);
+		$parentdir = $preg_rs[1];
+		$petrol = $preg_rs[2].'://';
+		$host = $preg_rs[3];
+
+		if(preg_match('~^/~i',$relative))
+			return $petrol.$host.$relative;
+		
+		return $parentdir.$relative;
 	}
 	
 	function clear(){

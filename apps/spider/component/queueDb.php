@@ -18,6 +18,10 @@ class queueDb implements iList {
 	}
 	
 	function put($data){
+		if($this->isExist(array('url'=>$data['url']))){
+			return true;
+		}
+
 		if(($qid = urlQueue::model()->add($data)) > 0)
 			return true;
 		

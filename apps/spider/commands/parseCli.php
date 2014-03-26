@@ -6,7 +6,6 @@ class parseCli extends backgroundCli{
 		$this->queue()->init();
 
 		while(1){
-			/*
 			urlResouce::model()->buildTable();
 			
 			if($this->isStop()){
@@ -19,13 +18,15 @@ class parseCli extends backgroundCli{
 				sleep(5);
 				continue;
 			}
-			*/
-		$q['type'] = 'list';
-		$q['target'] = 'cosplay8_chinacos';
-		$q['url'] = 'http://www.cosplay8.com/pic/chinacos/list_22_1.html';
-		
+
+			if(isset($q['extents'])){
+				$q['extents'] = json_decode($q['extents'],true);
+			}
+
 			if($q['type'] == 'list'){
 				$this->doList($q);
+			}elseif ($q['type'] == 'pages'){
+				$this->doPages($q);
 			}elseif ($q['type'] == 'art'){
 				$this->doArt($q);
 			}
@@ -37,82 +38,103 @@ class parseCli extends backgroundCli{
 	function doList($q){
 
 		$doc = new spiderDoc($q['target']);
+		$host = $doc->getConfig('host');
 
 		if($doc->clawler($q['url']) === false){
-			echo "skip ".$q['qid']." on doc ".$doc->resouce['id']." \r\n";
+			echo "skip ".$q['url']." \r\n";
 			
 		}else{
 			$item = array('links');
 			$data = $doc->getItems($item);
 
 			foreach($data['links'] as $r){
+
+				if(coserArt::model()->addResouce(array('title'=>$r['title']))){
+					continue;
+				}
+
 				$art = array();
 				$art['title'] = $r['title'];
 				$art['posttime'] = TIMESTAMP;
-				$art['coverurl'] = 'http://www.cosplay8.com'.$r['coverurl'];
+
+				$art['coverurl'] = $doc->autoLink($r['coverurl'],$q['url']);
 				$art['coser'] = '';
-				
+
 				if($artid = coserArt::model()->addResouce($art)){
 					$art['aid'] = $artid;
 					$d = array(
-						'type' => 'art',
-						'target' => 'cosplay8_chinacos',
-						'url' => 'http://www.cosplay8.com'.$r['url'],
+						'type' => 'pages',
+						'target' => $q['target'],
+						'url' => $doc->autoLink($r['url'],$q['url']),
 						'status' => 0,
 						'extents'=> json_encode($art),
 						'dateline' => TIMESTAMP
 					);
 
 					$this->queue()->put($d);
-					echo "add queue url ".$r['url']." \r\n";
+					echo "add queue url ".$d['url']." \r\n";
 				}else{
 					echo "[Error]add faild: url ".$r['url']." \r\n";
 				}
-
-				
 			}
-
-
 		}
+
+		$doc->clear();
 	}
+
+	function doPages($q){
+		$doc = new spiderDoc($q['target']);		
+		$host = $doc->getConfig('host');
+
+		if($doc->clawler($q['url']) === false){
+			echo "skip ".$q['url']." \r\n";	
+		}else{
+
+			$item = array('pages');
+			$data = $doc->getItems($item);
+
+			foreach($data['pages'] as $url){
+				$d = array(
+					'type' => 'art',
+					'target' => $q['target'],
+					'url' => $doc->autoLink($url,$q['url']),
+					'status' => 0,
+					'extents'=> $q['extents'],
+					'dateline' => TIMESTAMP
+				);
+
+				$this->queue()->put($d);
+				echo "add queue url ".$d['url']." \r\n";
+			}
+		}
+
+		$doc->clear();	
+	}	
 
 	function doArt($q){
 
-		$q['target'] = 'cosplay8_chinacos';
-		$q['url'] = 'http://www.cosplay8.com/pic/chinacos/2014/0212/57000.html';
-		
-		$target_arr = explode('_',$q['target']);
-		
 		$doc = new spiderDoc($q['target']);		
+		$host = $doc->getConfig('host');
 
-		if($doc->spider($q['url']) === false){
-			$data = array(
-				'target' => $q['target'],
-				'url' => $q['url'],
-				'status' => 0,
-				'dateline' => TIMESTAMP
-			);
-			$this->queue()->put($data);
-			echo "skip ".$q['qid']." on doc ".$doc->resouce['id']." \r\n";
-			
+		if($doc->clawler($q['url']) === false){
+			echo "skip ".$q['url']." \r\n";
 		}else{
-			$item = array('title','picnum','picurl');
+
+			$item = array('picurl');
 			$data = $doc->getItems($item);
 
-			if(empty($data)){
-				echo "void ".$doc->resouce['id']."\r\n";
-				$doc->setVoid();
-			}else{
-				
-				if(isset($res['status']) && $res['status'] == '0000'){
-					echo "parsed ".$doc->resouce['id']."\r\n";
-					$doc->setSuccess($res['data']['house_guid']);
-				}else{
-					print_r($res);
+			if(isset($data['picurl']) && $data['picurl']){
+				$art = array();
+				$art['aid'] = isset($q['extents']['aid']) ? $q['extents']['aid']: 0;
+				$art['attach_url'] = $doc->autoLink($data['picurl'],$q['url']);
+				$art['createtime'] = TIMESTAMP;
+
+				if(!coserAttach::model()->addResouce(array('attach_url'=>$art['attach_url'],'aid'=>$art['aid']))){
+					coserAttach::model()->addAttach($art);
 				}
 			}
 		}
-		exit;
+
 		$doc->clear();
 	}
 }

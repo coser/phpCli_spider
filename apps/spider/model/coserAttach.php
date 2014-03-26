@@ -25,7 +25,7 @@ class coserAttach extends BaseDb
 	
 	public function count($where = array())
 	{	
-		$sql = "SELECT count(id) as count FROM ".$this->tablename().$this->buildWhere($where);
+		$sql = "SELECT count(*) as count FROM ".$this->tablename().$this->buildWhere($where);
 		$row = $this->fetch($sql);
 		return $row['count'];
 	}
@@ -33,13 +33,8 @@ class coserAttach extends BaseDb
 	public function hasExist($where = array())
 	{
 		
-		$sql = "SELECT count(id) as count FROM ".$this->tablename().$this->buildWhere($where);
+		$sql = "SELECT count(*) as count FROM ".$this->tablename().$this->buildWhere($where);
 		$row = $this->fetch($sql);
-			
-		if(!$row['count'] && date('j') < 7){
-			$sql = "SELECT count(id) as count FROM ".$this->prevtable().$this->buildWhere($where);
-			$row = $this->fetch($sql);			
-		}
 
 		return $row['count'];
 	}

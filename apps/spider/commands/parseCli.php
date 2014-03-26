@@ -5,8 +5,7 @@ class parseCli extends backgroundCli{
 
 		$this->queue()->init();
 
-		while(1){
-			urlResouce::model()->buildTable();
+		while(1){	
 			
 			if($this->isStop()){
 				break;
@@ -15,6 +14,7 @@ class parseCli extends backgroundCli{
 			$q = $this->queue()->flush();
 
 			if(empty($q)){
+				echo "no queue.. \r\n";
 				sleep(5);
 				continue;
 			}
@@ -30,7 +30,7 @@ class parseCli extends backgroundCli{
 			}elseif ($q['type'] == 'art'){
 				$this->doArt($q);
 			}
-			exit;
+
 			usleep(1000);			
 		}
 	}
@@ -38,7 +38,6 @@ class parseCli extends backgroundCli{
 	function doList($q){
 
 		$doc = new spiderDoc($q['target']);
-		$host = $doc->getConfig('host');
 
 		if($doc->clawler($q['url']) === false){
 			echo "skip ".$q['url']." \r\n";
@@ -49,7 +48,7 @@ class parseCli extends backgroundCli{
 
 			foreach($data['links'] as $r){
 
-				if(coserArt::model()->addResouce(array('title'=>$r['title']))){
+				if(coserArt::model()->hasExist(array('title'=>$r['title']))){
 					continue;
 				}
 
@@ -99,7 +98,7 @@ class parseCli extends backgroundCli{
 					'target' => $q['target'],
 					'url' => $doc->autoLink($url,$q['url']),
 					'status' => 0,
-					'extents'=> $q['extents'],
+					'extents'=> json_encode($q['extents']),
 					'dateline' => TIMESTAMP
 				);
 
@@ -129,8 +128,11 @@ class parseCli extends backgroundCli{
 				$art['attach_url'] = $doc->autoLink($data['picurl'],$q['url']);
 				$art['createtime'] = TIMESTAMP;
 
-				if(!coserAttach::model()->addResouce(array('attach_url'=>$art['attach_url'],'aid'=>$art['aid']))){
+				if(!coserAttach::model()->hasExist(array('attach_url'=>$art['attach_url'],'aid'=>$art['aid']))){
 					coserAttach::model()->addAttach($art);
+					echo "add art: url ".$art['attach_url']." for aid ".$art['aid']." \r\n";
+				}else{
+					echo "add art skip: has exist url ".$art['attach_url']." for aid ".$art['aid']." \r\n";
 				}
 			}
 		}
